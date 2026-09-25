@@ -30,6 +30,17 @@ class Menu extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('customer_all_available_menus');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('customer_all_available_menus');
+        });
+    }
+
     // -------------------------------------------------------
     // Mass Assignment
     // -------------------------------------------------------

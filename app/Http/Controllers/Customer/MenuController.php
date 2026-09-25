@@ -35,18 +35,18 @@ class MenuController extends Controller
             $category = 'bundling_hemat';
         }
 
-        $query = Menu::available()->ordered();
+        // Cache all available menus in Redis to eliminate DB latency
+        $allAvailableMenus = \Illuminate\Support\Facades\Cache::remember('customer_all_available_menus', 3600, function () {
+            return Menu::available()->ordered()->get();
+        });
 
+        // Group / filter by category for section display
         if ($category !== 'all') {
-            $query->byCategory($category);
+            $filtered = $allAvailableMenus->where('category', $category)->values();
+            $menus = collect([$category => $filtered]);
+        } else {
+            $menus = $allAvailableMenus->groupBy('category');
         }
-
-        $allMenus = $query->get();
-
-        // Group by category for section display
-        $menus = $category !== 'all'
-            ? collect([($category) => $allMenus])
-            : $allMenus->groupBy('category');
 
         $cart = session('cart', []);
         $cartCount = count($cart);
